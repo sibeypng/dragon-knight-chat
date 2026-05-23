@@ -22,7 +22,14 @@
       position: relative;
     }
 
-    #anime-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: -1; overflow: hidden; }
+    #anime-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: transparent;
+      z-index: -1;
+      overflow: hidden;
+    }
 
     #header {
       flex-shrink: 0;
@@ -31,7 +38,7 @@
       font-size: 26px;
       color: #ffd700;
       text-shadow: 0 0 15px #ff8800, 0 0 25px #8b1e1e;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
       letter-spacing: 4px;
       z-index: 10;
     }
@@ -56,7 +63,8 @@
       background: transparent;
       border: none;
       border-radius: 28px;
-      box-shadow: 0 0 30px rgba(184, 134, 11, 0.4), inset 0 0 60px rgba(139, 30, 30, 0.5);
+      box-shadow: 0 0 30px rgba(184, 134, 11, 0.4),
+                  inset 0 0 60px rgba(139, 30, 30, 0.5);
       z-index: 10;
     }
 
@@ -80,7 +88,13 @@
       content: '';
       position: absolute;
       inset: -4px;
-      background: linear-gradient(90deg, transparent 10%, #ff2200 25%, #ff8800 45%, #ffee66 55%, #ff8800 70%, transparent 90%);
+      background: linear-gradient(90deg, 
+        transparent 10%, 
+        #ff2200 25%, 
+        #ff8800 45%, 
+        #ffee66 55%, 
+        #ff8800 70%, 
+        transparent 90%);
       background-size: 300% 300%;
       border-radius: 20px;
       z-index: -1;
@@ -90,28 +104,33 @@
     }
 
     @keyframes fireSwipe {
-      0% { background-position: 0% 50%; }
+      0%   { background-position: 0% 50%; }
       100% { background-position: 300% 50%; }
     }
 
-    .username { font-family: 'MedievalSharp', cursive; color: #ffeb3b; text-shadow: 0 0 12px #ffeb3b; font-size: 21px; margin-bottom: 6px; }
-    .text { color: #ffffff; font-weight: bold; font-size: 19px; line-height: 1.5; text-shadow: 0 0 8px rgba(255,255,255,0.4); }
+    .username {
+      font-family: 'MedievalSharp', cursive;
+      color: #ffeb3b;
+      text-shadow: 0 0 12px #ffeb3b;
+      font-size: 21px;
+      margin-bottom: 6px;
+    }
 
-    #debug {
-      position: fixed;
-      bottom: 70px;
-      left: 20px;
-      right: 20px;
-      max-height: 200px;
-      background: rgba(0,0,0,0.9);
-      color: #0f0;
-      font-family: monospace;
-      font-size: 13px;
-      padding: 10px;
-      border-radius: 8px;
-      overflow-y: auto;
-      z-index: 200;
-      white-space: pre-wrap;
+    .text {
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 19px;
+      line-height: 1.5;
+      text-shadow: 0 0 8px rgba(255,255,255,0.4);
+    }
+
+    #chat::-webkit-scrollbar {
+      width: 12px;
+    }
+    #chat::-webkit-scrollbar-thumb {
+      background: linear-gradient(#d4af77, #b8860b);
+      border-radius: 20px;
+      box-shadow: 0 0 12px #ff8800;
     }
   </style>
 </head>
@@ -121,74 +140,51 @@
   <div id="header">SIBEY'S ROUND TABLE</div>
   <div id="status">🔄 Connecting to Twitch chat...</div>
   <div id="chat"></div>
-  <div id="debug">Debug started...\n</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/tmi.js@1.8.5/tmi.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
   <script>
-    const statusEl = document.getElementById('status');
-    const debugEl = document.getElementById('debug');
     const chatContainer = document.getElementById('chat');
+    const statusEl = document.getElementById('status');
     const channel = 'sibeypng';
 
-    function log(msg) {
-      const time = new Date().toLocaleTimeString();
-      debugEl.textContent += `[${time}] ${msg}\n`;
-      debugEl.scrollTop = debugEl.scrollHeight;
-      console.log(msg);
-    }
-
     function addMessage(user, text, color = '#ffd700') {
-      const div = document.createElement('div');
-      div.className = 'message';
-      div.innerHTML = `<div class="username" style="color:${color}">${user}</div><div class="text">${text}</div>`;
-      chatContainer.appendChild(div);
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+      msgDiv.innerHTML = `
+        <div class="username" style="color: ${color}">${user}</div>
+        <div class="text">${text}</div>
+      `;
+      chatContainer.appendChild(msgDiv);
       chatContainer.scrollTop = chatContainer.scrollHeight;
-      if (chatContainer.children.length > 35) chatContainer.removeChild(chatContainer.children[0]);
+
+      if (chatContainer.children.length > 35) {
+        chatContainer.removeChild(chatContainer.children[0]);
+      }
     }
 
-    function connect() {
-      log('=== NEW CONNECTION ATTEMPT ===');
+    // ComfyJS Setup (much more reliable in OBS)
+    ComfyJS.onMessage = (user, message, flags, self, extra) => {
+      if (self) return;
+      const userColor = extra.userColor || '#ffeb3b';
+      addMessage(user, message, userColor);
+    };
 
-      const client = new tmi.Client({
-        options: { debug: true },
-        connection: { secure: true, reconnect: true, timeout: 30000 },
-        channels: [channel]
-      });
+    ComfyJS.onConnected = (user) => {
+      statusEl.innerHTML = '✅ Connected to Twitch chat — ready for knights!';
+      statusEl.style.background = 'rgba(0, 255, 100, 0.3)';
+      addMessage('System', '🐉 Connected to chat — ready for knights!', '#00ff88');
+      console.log('✅ ComfyJS Connected!');
+    };
 
-      client.on('connecting', () => log('🔄 connecting event'));
-      client.on('connected', () => {
-        log('✅ SUCCESSFULLY CONNECTED!');
-        statusEl.innerHTML = '✅ Connected to Twitch chat!';
-        statusEl.style.background = 'rgba(0,255,100,0.3)';
-        addMessage('System', '🐉 Connected — ready for knights!', '#00ff88');
-      });
-      client.on('disconnected', (reason) => log('❌ Disconnected: ' + reason));
-      client.on('error', (err) => log('❌ ERROR: ' + (err.message || err)));
+    // Start connection
+    ComfyJS.Init(channel);
 
-      client.on('message', (channel, tags, message, self) => {
-        if (self) return;
-        const user = tags['display-name'] || 'Knight';
-        const color = tags.color || '#ffeb3b';
-        addMessage(user, message, color);
-        log(`📨 ${user}`);
-      });
-
-      client.connect()
-        .then(() => log('connect() promise resolved'))
-        .catch(e => log('❌ connect() failed: ' + e));
-
-      // Force timeout message
-      setTimeout(() => {
-        if (statusEl.textContent.includes('Connecting')) {
-          log('⏰ TIMEOUT — no response from Twitch after 12 seconds');
-          statusEl.innerHTML = '⏰ Connection timed out.<br>Try refreshing page or check console (F12)';
-          statusEl.style.background = 'rgba(255,180,0,0.4)';
-        }
-      }, 12000);
-    }
-
-    // Start it
-    connect();
+    // Optional test message (remove later if you want)
+    setTimeout(() => {
+      if (statusEl.textContent.includes('Connecting')) {
+        addMessage('System', '🔥 Test message — chat overlay is ready!', '#00ff88');
+      }
+    }, 3000);
   </script>
 </body>
 </html>
