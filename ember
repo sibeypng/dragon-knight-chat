@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sibeypng | Dragon Knight Chat</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;700&display=swap');
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 15px;
+      background: transparent;
+      font-family: 'Cinzel', serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      color: #f0d9a0;
+      position: relative;
+    }
+
+    #anime-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: transparent;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    #header {
+      flex-shrink: 0;
+      text-align: center;
+      font-family: 'MedievalSharp', cursive;
+      font-size: 26px;
+      color: #ffd700;
+      text-shadow: 0 0 15px #ff8800, 0 0 25px #8b1e1e;
+      margin-bottom: 12px;
+      letter-spacing: 4px;
+      z-index: 10;
+    }
+
+    #status {
+      text-align: center;
+      font-size: 16px;
+      padding: 8px;
+      margin-top: 8px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.6);
+      z-index: 10;
+      opacity: 0.95;
+    }
+
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: transparent;
+      border: none;
+      border-radius: 28px;
+      box-shadow: 0 0 30px rgba(184, 134, 11, 0.4),
+                  inset 0 0 60px rgba(139, 30, 30, 0.5);
+      z-index: 10;
+    }
+
+    .message {
+      position: relative;
+      padding: 16px 20px;
+      background: rgba(35, 18, 12, 0.95);
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(212, 175, 119, 0.6);
+      animation: dragonPop 0.7s ease forwards;
+      overflow: hidden;
+      max-width: 100%;           /* ← important for wrapping */
+      width: fit-content;
+    }
+
+    @keyframes dragonPop {
+      0% { opacity: 0; transform: translateY(40px) scale(0.9); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .message::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      background: linear-gradient(90deg, 
+        transparent 10%, 
+        #ff2200 25%, 
+        #ff8800 45%, 
+        #ffee66 55%, 
+        #ff8800 70%, 
+        transparent 90%);
+      background-size: 300% 300%;
+      border-radius: 20px;
+      z-index: -1;
+      animation: fireSwipe 1.8s linear forwards;
+      filter: blur(5px);
+      opacity: 0.95;
+    }
+
+    @keyframes fireSwipe {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    .username {
+      font-family: 'MedievalSharp', cursive;
+      color: #ffeb3b;
+      text-shadow: 0 0 12px #ffeb3b;
+      font-size: 26px;
+      margin-bottom: 8px;
+    }
+
+    .text {
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 19px;
+      line-height: 1.5;
+      text-shadow: 0 0 8px rgba(255,255,255,0.4);
+      word-break: break-word;        /* ← NEW */
+      overflow-wrap: break-word;     /* ← NEW */
+      white-space: pre-wrap;         /* ← NEW */
+    }
+
+    #chat::-webkit-scrollbar {
+      width: 12px;
+    }
+    #chat::-webkit-scrollbar-thumb {
+      background: linear-gradient(#d4af77, #b8860b);
+      border-radius: 20px;
+      box-shadow: 0 0 12px #ff8800;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="anime-bg"></div>
+  <div id="header">SIBEY'S ROUND TABLE</div>
+  <div id="chat"></div>
+  <div id="status">🔄 Connecting to Twitch chat...</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+  <script>
+    const chatContainer = document.getElementById('chat');
+    const statusEl = document.getElementById('status');
+    const channel = 'sibeypng';
+
+    function addMessage(user, text, color = '#ffd700') {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+      msgDiv.innerHTML = `
+        <div class="username" style="color: ${color}">${user}</div>
+        <div class="text">${text}</div>
+      `;
+      chatContainer.appendChild(msgDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      if (chatContainer.children.length > 35) {
+        chatContainer.removeChild(chatContainer.children[0]);
+      }
+    }
+
+    ComfyJS.onMessage = (user, message, flags, self, extra) => {
+      const userColor = extra.userColor || '#ffeb3b';
+      addMessage(user, message, userColor);
+    };
+
+    ComfyJS.onChat = (user, message, flags, self, extra) => {
+      const userColor = extra.userColor || '#ffeb3b';
+      addMessage(user, message, userColor);
+    };
+
+    ComfyJS.onConnected = () => {
+      statusEl.innerHTML = '✅ Connected — ready for knights!';
+      statusEl.style.background = 'rgba(0, 255, 100, 0.3)';
+      setTimeout(() => {
+        statusEl.style.transition = 'opacity 1s';
+        statusEl.style.opacity = '0';
+      }, 5000);
+    };
+
+    ComfyJS.Init(channel);
+  </script>
+</body>
+</html>
