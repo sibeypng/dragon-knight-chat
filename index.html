@@ -163,8 +163,8 @@
       }
     }
 
+    // 🔥 Now shows YOUR messages too (perfect for testing while live)
     ComfyJS.onMessage = (user, message, flags, self, extra) => {
-      if (self) return;
       const userColor = extra.userColor || '#ffeb3b';
       addMessage(user, message, userColor);
     };
@@ -172,14 +172,12 @@
     ComfyJS.onConnected = () => {
       statusEl.innerHTML = '✅ Connected — ready for knights!';
       statusEl.style.background = 'rgba(0, 255, 100, 0.3)';
-      // Auto-hide status after 4 seconds
       setTimeout(() => {
         statusEl.style.transition = 'opacity 1s';
         statusEl.style.opacity = '0';
       }, 4000);
     };
 
-    // Start the chat
     ComfyJS.Init(channel);
   </script>
 </body>
