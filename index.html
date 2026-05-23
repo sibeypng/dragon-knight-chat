@@ -102,8 +102,8 @@
       bottom: 70px;
       left: 20px;
       right: 20px;
-      max-height: 180px;
-      background: rgba(0,0,0,0.85);
+      max-height: 200px;
+      background: rgba(0,0,0,0.9);
       color: #0f0;
       font-family: monospace;
       font-size: 13px;
@@ -112,24 +112,7 @@
       overflow-y: auto;
       z-index: 200;
       white-space: pre-wrap;
-      line-height: 1.4;
     }
-
-    #test-btn, #reconnect-btn {
-      position: fixed;
-      bottom: 20px;
-      padding: 12px 24px;
-      background: #ff8800;
-      color: #000;
-      font-weight: bold;
-      border: none;
-      border-radius: 999px;
-      cursor: pointer;
-      box-shadow: 0 0 20px #ff4400;
-      z-index: 100;
-    }
-    #test-btn { right: 160px; }
-    #reconnect-btn { right: 20px; }
   </style>
 </head>
 <body>
@@ -138,18 +121,14 @@
   <div id="header">SIBEY'S ROUND TABLE</div>
   <div id="status">🔄 Connecting to Twitch chat...</div>
   <div id="chat"></div>
-  <div id="debug">Debug log started...\n</div>
-
-  <button id="test-btn">🧪 Test Message</button>
-  <button id="reconnect-btn">🔄 Reconnect</button>
+  <div id="debug">Debug started...\n</div>
 
   <script src="https://cdn.jsdelivr.net/npm/tmi.js@1.8.5/tmi.min.js"></script>
   <script>
-    const chatContainer = document.getElementById('chat');
     const statusEl = document.getElementById('status');
     const debugEl = document.getElementById('debug');
+    const chatContainer = document.getElementById('chat');
     const channel = 'sibeypng';
-    let client;
 
     function log(msg) {
       const time = new Date().toLocaleTimeString();
@@ -159,60 +138,57 @@
     }
 
     function addMessage(user, text, color = '#ffd700') {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'message';
-      msgDiv.innerHTML = `<div class="username" style="color: ${color}">${user}</div><div class="text">${text}</div>`;
-      chatContainer.appendChild(msgDiv);
+      const div = document.createElement('div');
+      div.className = 'message';
+      div.innerHTML = `<div class="username" style="color:${color}">${user}</div><div class="text">${text}</div>`;
+      chatContainer.appendChild(div);
       chatContainer.scrollTop = chatContainer.scrollHeight;
       if (chatContainer.children.length > 35) chatContainer.removeChild(chatContainer.children[0]);
     }
 
-    document.getElementById('test-btn').addEventListener('click', () => {
-      addMessage('Test Knight', 'Test message — fire swipe works! 🔥', '#00ff88');
-    });
-
-    function connectToTwitch() {
-      if (client) client.disconnect();
+    function connect() {
       log('=== NEW CONNECTION ATTEMPT ===');
 
-      client = new tmi.Client({
+      const client = new tmi.Client({
         options: { debug: true },
         connection: { secure: true, reconnect: true, timeout: 30000 },
-        identity: { username: `justinfan${Math.floor(Math.random()*900000)+100000}` },
         channels: [channel]
       });
 
-      statusEl.innerHTML = '🔄 Connecting to Twitch chat...';
-      statusEl.style.background = 'rgba(0,0,0,0.6)';
-
-      // Extra detailed event listeners
-      client.on('connecting', () => log('🔄 Connecting event fired'));
-      client.on('connected', (addr, port) => {
-        log(`✅ CONNECTED to ${addr}:${port}`);
-        statusEl.innerHTML = '✅ Connected to Twitch chat — ready for knights!';
-        statusEl.style.background = 'rgba(0, 255, 100, 0.3)';
-        addMessage('System', '🐉 Connected to chat — ready for knights!', '#00ff88');
+      client.on('connecting', () => log('🔄 connecting event'));
+      client.on('connected', () => {
+        log('✅ SUCCESSFULLY CONNECTED!');
+        statusEl.innerHTML = '✅ Connected to Twitch chat!';
+        statusEl.style.background = 'rgba(0,255,100,0.3)';
+        addMessage('System', '🐉 Connected — ready for knights!', '#00ff88');
       });
-      client.on('disconnected', (reason) => log(`❌ Disconnected: ${reason}`));
-      client.on('error', (err) => log(`❌ ERROR: ${err.message || err}`));
+      client.on('disconnected', (reason) => log('❌ Disconnected: ' + reason));
+      client.on('error', (err) => log('❌ ERROR: ' + (err.message || err)));
+
       client.on('message', (channel, tags, message, self) => {
         if (self) return;
-        const username = tags['display-name'] || 'Knight';
-        const userColor = tags.color || '#ffeb3b';
-        addMessage(username, message, userColor);
-        log(`📨 Message from ${username}`);
+        const user = tags['display-name'] || 'Knight';
+        const color = tags.color || '#ffeb3b';
+        addMessage(user, message, color);
+        log(`📨 ${user}`);
       });
 
       client.connect()
         .then(() => log('connect() promise resolved'))
-        .catch(err => log(`❌ connect() promise rejected: ${err.message || err}`));
+        .catch(e => log('❌ connect() failed: ' + e));
+
+      // Force timeout message
+      setTimeout(() => {
+        if (statusEl.textContent.includes('Connecting')) {
+          log('⏰ TIMEOUT — no response from Twitch after 12 seconds');
+          statusEl.innerHTML = '⏰ Connection timed out.<br>Try refreshing page or check console (F12)';
+          statusEl.style.background = 'rgba(255,180,0,0.4)';
+        }
+      }, 12000);
     }
 
-    // Start
-    connectToTwitch();
-
-    // Reconnect button
-    document.getElementById('reconnect-btn').addEventListener('click', connectToTwitch);
+    // Start it
+    connect();
   </script>
 </body>
 </html>
