@@ -43,16 +43,6 @@
       z-index: 10;
     }
 
-    #status {
-      text-align: center;
-      font-size: 18px;
-      padding: 10px;
-      margin-bottom: 8px;
-      border-radius: 12px;
-      background: rgba(0,0,0,0.6);
-      z-index: 10;
-    }
-
     #chat {
       flex: 1;
       overflow-y: auto;
@@ -138,13 +128,11 @@
 
   <div id="anime-bg"></div>
   <div id="header">SIBEY'S ROUND TABLE</div>
-  <div id="status">🔄 Connecting to Twitch chat...</div>
   <div id="chat"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
   <script>
     const chatContainer = document.getElementById('chat');
-    const statusEl = document.getElementById('status');
     const channel = 'sibeypng';
 
     function addMessage(user, text, color = '#ffd700') {
@@ -162,29 +150,14 @@
       }
     }
 
-    // ComfyJS Setup (much more reliable in OBS)
+    // 🔥 ComfyJS - Twitch Chat
     ComfyJS.onMessage = (user, message, flags, self, extra) => {
       if (self) return;
       const userColor = extra.userColor || '#ffeb3b';
       addMessage(user, message, userColor);
     };
 
-    ComfyJS.onConnected = (user) => {
-      statusEl.innerHTML = '✅ Connected to Twitch chat — ready for knights!';
-      statusEl.style.background = 'rgba(0, 255, 100, 0.3)';
-      addMessage('System', '🐉 Connected to chat — ready for knights!', '#00ff88');
-      console.log('✅ ComfyJS Connected!');
-    };
-
-    // Start connection
     ComfyJS.Init(channel);
-
-    // Optional test message (remove later if you want)
-    setTimeout(() => {
-      if (statusEl.textContent.includes('Connecting')) {
-        addMessage('System', '🔥 Test message — chat overlay is ready!', '#00ff88');
-      }
-    }, 3000);
   </script>
 </body>
 </html>
