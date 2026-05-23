@@ -43,6 +43,17 @@
       z-index: 10;
     }
 
+    #status {
+      text-align: center;
+      font-size: 16px;
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.6);
+      z-index: 10;
+      opacity: 0.9;
+    }
+
     #chat {
       flex: 1;
       overflow-y: auto;
@@ -128,11 +139,13 @@
 
   <div id="anime-bg"></div>
   <div id="header">SIBEY'S ROUND TABLE</div>
+  <div id="status">🔄 Connecting to Twitch chat...</div>
   <div id="chat"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
   <script>
     const chatContainer = document.getElementById('chat');
+    const statusEl = document.getElementById('status');
     const channel = 'sibeypng';
 
     function addMessage(user, text, color = '#ffd700') {
@@ -150,13 +163,23 @@
       }
     }
 
-    // 🔥 ComfyJS - Twitch Chat
     ComfyJS.onMessage = (user, message, flags, self, extra) => {
       if (self) return;
       const userColor = extra.userColor || '#ffeb3b';
       addMessage(user, message, userColor);
     };
 
+    ComfyJS.onConnected = () => {
+      statusEl.innerHTML = '✅ Connected — ready for knights!';
+      statusEl.style.background = 'rgba(0, 255, 100, 0.3)';
+      // Auto-hide status after 4 seconds
+      setTimeout(() => {
+        statusEl.style.transition = 'opacity 1s';
+        statusEl.style.opacity = '0';
+      }, 4000);
+    };
+
+    // Start the chat
     ComfyJS.Init(channel);
   </script>
 </body>
