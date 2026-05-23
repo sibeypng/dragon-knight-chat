@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sibeypng | Dragon Knight Chat</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;700&display=swap');
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 15px;
+      background: transparent;
+      font-family: 'Cinzel', serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      color: #f0d9a0;
+      position: relative;
+    }
+
+    #anime-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: -1; overflow: hidden; }
+
+    #header {
+      flex-shrink: 0;
+      text-align: center;
+      font-family: 'MedievalSharp', cursive;
+      font-size: 26px;
+      color: #ffd700;
+      text-shadow: 0 0 15px #ff8800, 0 0 25px #8b1e1e;
+      margin-bottom: 8px;
+      letter-spacing: 4px;
+      z-index: 10;
+    }
+
+    #status {
+      text-align: center;
+      font-size: 18px;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.6);
+      z-index: 10;
+    }
+
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: transparent;
+      border: none;
+      border-radius: 28px;
+      box-shadow: 0 0 30px rgba(184, 134, 11, 0.4), inset 0 0 60px rgba(139, 30, 30, 0.5);
+      z-index: 10;
+    }
+
+    .message {
+      position: relative;
+      padding: 16px 20px;
+      background: rgba(35, 18, 12, 0.95);
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(212, 175, 119, 0.6);
+      animation: dragonPop 0.7s ease forwards;
+      overflow: hidden;
+    }
+
+    @keyframes dragonPop {
+      0% { opacity: 0; transform: translateY(40px) scale(0.9); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .message::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      background: linear-gradient(90deg, transparent 10%, #ff2200 25%, #ff8800 45%, #ffee66 55%, #ff8800 70%, transparent 90%);
+      background-size: 300% 300%;
+      border-radius: 20px;
+      z-index: -1;
+      animation: fireSwipe 1.8s linear forwards;
+      filter: blur(5px);
+      opacity: 0.95;
+    }
+
+    @keyframes fireSwipe {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    .username { font-family: 'MedievalSharp', cursive; color: #ffeb3b; text-shadow: 0 0 12px #ffeb3b; font-size: 21px; margin-bottom: 6px; }
+    .text { color: #ffffff; font-weight: bold; font-size: 19px; line-height: 1.5; text-shadow: 0 0 8px rgba(255,255,255,0.4); }
+
+    #debug {
+      position: fixed;
+      bottom: 70px;
+      left: 20px;
+      right: 20px;
+      max-height: 180px;
+      background: rgba(0,0,0,0.85);
+      color: #0f0;
+      font-family: monospace;
+      font-size: 13px;
+      padding: 10px;
+      border-radius: 8px;
+      overflow-y: auto;
+      z-index: 200;
+      white-space: pre-wrap;
+      line-height: 1.4;
+    }
+
+    #test-btn, #reconnect-btn {
+      position: fixed;
+      bottom: 20px;
+      padding: 12px 24px;
+      background: #ff8800;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 0 20px #ff4400;
+      z-index: 100;
+    }
+    #test-btn { right: 160px; }
+    #reconnect-btn { right: 20px; }
+  </style>
+</head>
+<body>
+
+  <div id="anime-bg"></div>
+  <div id="header">SIBEY'S ROUND TABLE</div>
+  <div id="status">🔄 Connecting to Twitch chat...</div>
+  <div id="chat"></div>
+  <div id="debug">Debug log started...\n</div>
+
+  <button id="test-btn">🧪 Test Message</button>
+  <button id="reconnect-btn">🔄 Reconnect</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/tmi.js@1.8.5/tmi.min.js"></script>
+  <script>
+    const chatContainer = document.getElementById('chat');
+    const statusEl = document.getElementById('status');
+    const debugEl = document.getElementById('debug');
+    const channel = 'sibeypng';
+    let client;
+
+    function log(msg) {
+      const time = new Date().toLocaleTimeString();
+      debugEl.textContent += `[${time}] ${msg}\n`;
+      debugEl.scrollTop = debugEl.scrollHeight;
+      console.log(msg);
+    }
+
+    function addMessage(user, text, color = '#ffd700') {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+      msgDiv.innerHTML = `<div class="username" style="color: ${color}">${user}</div><div class="text">${text}</div>`;
+      chatContainer.appendChild(msgDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      if (chatContainer.children.length > 35) chatContainer.removeChild(chatContainer.children[0]);
+    }
+
+    document.getElementById('test-btn').addEventListener('click', () => {
+      addMessage('Test Knight', 'Test message — fire swipe works! 🔥', '#00ff88');
+    });
+
+    function connectToTwitch() {
+      if (client) client.disconnect();
+      log('=== NEW CONNECTION ATTEMPT ===');
+
+      client = new tmi.Client({
+        options: { debug: true },
+        connection: { secure: true, reconnect: true, timeout: 30000 },
+        identity: { username: `justinfan${Math.floor(Math.random()*900000)+100000}` },
+        channels: [channel]
+      });
+
+      statusEl.innerHTML = '🔄 Connecting to Twitch chat...';
+      statusEl.style.background = 'rgba(0,0,0,0.6)';
+
+      // Extra detailed event listeners
+      client.on('connecting', () => log('🔄 Connecting event fired'));
+      client.on('connected', (addr, port) => {
+        log(`✅ CONNECTED to ${addr}:${port}`);
+        statusEl.innerHTML = '✅ Connected to Twitch chat — ready for knights!';
+        statusEl.style.background = 'rgba(0, 255, 100, 0.3)';
+        addMessage('System', '🐉 Connected to chat — ready for knights!', '#00ff88');
+      });
+      client.on('disconnected', (reason) => log(`❌ Disconnected: ${reason}`));
+      client.on('error', (err) => log(`❌ ERROR: ${err.message || err}`));
+      client.on('message', (channel, tags, message, self) => {
+        if (self) return;
+        const username = tags['display-name'] || 'Knight';
+        const userColor = tags.color || '#ffeb3b';
+        addMessage(username, message, userColor);
+        log(`📨 Message from ${username}`);
+      });
+
+      client.connect()
+        .then(() => log('connect() promise resolved'))
+        .catch(err => log(`❌ connect() promise rejected: ${err.message || err}`));
+    }
+
+    // Start
+    connectToTwitch();
+
+    // Reconnect button
+    document.getElementById('reconnect-btn').addEventListener('click', connectToTwitch);
+  </script>
+</body>
+</html>
