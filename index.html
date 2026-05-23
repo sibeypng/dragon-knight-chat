@@ -51,7 +51,7 @@
       border-radius: 12px;
       background: rgba(0,0,0,0.6);
       z-index: 10;
-      opacity: 0.9;
+      opacity: 0.95;
     }
 
     #chat {
@@ -163,8 +163,14 @@
       }
     }
 
-    // 🔥 Now shows YOUR messages too (perfect for testing while live)
+    // 🔥 Shows EVERYONE'S messages (including yours while live)
     ComfyJS.onMessage = (user, message, flags, self, extra) => {
+      const userColor = extra.userColor || '#ffeb3b';
+      addMessage(user, message, userColor);
+    };
+
+    // Backup listener in case
+    ComfyJS.onChat = (user, message, flags, self, extra) => {
       const userColor = extra.userColor || '#ffeb3b';
       addMessage(user, message, userColor);
     };
@@ -175,7 +181,7 @@
       setTimeout(() => {
         statusEl.style.transition = 'opacity 1s';
         statusEl.style.opacity = '0';
-      }, 4000);
+      }, 5000);
     };
 
     ComfyJS.Init(channel);
